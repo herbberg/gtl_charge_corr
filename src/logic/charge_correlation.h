@@ -42,11 +42,12 @@ struct charge_correlation
 
     // calculates charge state for two objects
     template<typename T>
-    value_type state(const T& objects, size_t a, size_t b)
+    value_type state(const T& objects_1, const T& objects_2, size_t a, size_t b)
     {
-        if (objects[a].charge[valid_bit] and objects[b].charge[valid_bit])
+//         std::cout << "objects_1[" << a << "].charge[valid_bit]: " << objects_1[a].charge[valid_bit] << " objects_2[" << b << "].charge[valid_bit]: " << objects_2[b].charge[valid_bit] << "\n"; 
+        if (objects_1[a].charge[valid_bit] and objects_2[b].charge[valid_bit])
         {
-            if (objects[a].charge[sign_bit] == objects[b].charge[sign_bit]) // is like sign?
+            if (objects_1[a].charge[sign_bit] == objects_2[b].charge[sign_bit]) // is like sign?
                 return LIKE_SIGN;
             else
                 return OPPOSITE_SIGN;
@@ -56,26 +57,46 @@ struct charge_correlation
 
     // calculates charge state for three objects
     template<typename T>
-    value_type state(const T& objects, size_t a, size_t b, size_t c)
+    value_type state(const T& objects_1, const T& objects_2, size_t a, size_t b, size_t c)
     {
-        const value_type lhs = state(objects, a, b);
-        if (lhs == state(objects, b, c))
-            return lhs;
+        if (objects_1[a].charge[valid_bit] and objects_1[b].charge[valid_bit] and objects_1[c].charge[valid_bit])
+        {
+            if (objects_1[a].charge[sign_bit] and objects_1[b].charge[sign_bit] and objects_1[c].charge[sign_bit])
+            {
+                return LIKE_SIGN;
+            }
+            if (not objects_1[a].charge[sign_bit] and not objects_1[b].charge[sign_bit] and not objects_1[c].charge[sign_bit])
+            {
+                return LIKE_SIGN;
+            }
+            else
+                return OPPOSITE_SIGN;
+        }
         return IGNORE;
     }
 
     // calculates charge state for four objects
     template<typename T>
-    value_type state(const T& objects, size_t a, size_t b, size_t c, size_t d)
+    value_type state(const T& objects_1, const T& objects_2, size_t a, size_t b, size_t c, size_t d)
     {
-        const value_type lhs = state(objects, a, b, c);
-        if (lhs == state(objects, c, d))
-            return lhs;
-        return IGNORE;
-    }
+        if (objects_1[a].charge[valid_bit] and objects_1[b].charge[valid_bit] and objects_1[c].charge[valid_bit] and objects_1[d].charge[valid_bit])
+        {
+            if (objects_1[a].charge[sign_bit] and objects_1[b].charge[sign_bit] and objects_1[c].charge[sign_bit] and objects_1[d].charge[sign_bit])
+            {
+                return LIKE_SIGN;
+            }
+            if (not objects_1[a].charge[sign_bit] and not objects_1[b].charge[sign_bit] and not objects_1[c].charge[sign_bit] and not objects_1[d].charge[sign_bit])
+            {
+                return LIKE_SIGN;
+            }
+            else
+                return OPPOSITE_SIGN;
+        }
+        return OPPOSITE_SIGN;
+     }
 
     template<typename T>
-    void process(const T& objects)
+    void process(const T& objects_1, const T& objects_2)
     {
         // Almost insane optimization? Does it gain something?
         using utils::math::bitwidth;
@@ -92,19 +113,19 @@ struct charge_correlation
             {
 #pragma HLS unroll
                 // calculate double charge states
-                state_double[i][j] = state(objects, i, j);
+                state_double[i][j] = state(objects_1, objects_2, i, j);
 
                 for (iterator_type k = 0; k < size; ++k)
                 {
 #pragma HLS unroll
                     // calculate triple charge states
-                    state_triple[i][j][k] = state(objects, i, j, k);
+                    state_triple[i][j][k] = state(objects_1, objects_1, i, j, k);
 
                     for (iterator_type l = 0; l < size; ++l)
                     {
 #pragma HLS unroll
                         // calculate quad charge states
-                        state_quad[i][j][k][l] = state(objects, i, j, k, l);
+                        state_quad[i][j][k][l] = state(objects_1, objects_1, i, j, k, l);
                     }
                 }
             }
