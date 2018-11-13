@@ -92,7 +92,7 @@ struct charge_correlation
             else
                 return OPPOSITE_SIGN;
         }
-        return OPPOSITE_SIGN;
+        return IGNORE;
      }
 
     template<typename T>
